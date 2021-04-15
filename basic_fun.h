@@ -140,7 +140,7 @@ void split(const string &line, vector<string> &line_vec,
 size_t get_PDB_lines(const string filename,
     vector<vector<string> >&PDB_lines, vector<string> &chainID_list,
     vector<int> &mol_vec, const int ter_opt, const int infmt_opt,
-    const string atom_opt, const int split_opt, const int het_opt)
+    const string atom_opt_spaces, const int split_opt, const int het_opt)
 {
     size_t i=0; // resi i.e. atom index
     string line;
@@ -149,6 +149,8 @@ size_t get_PDB_lines(const string filename,
     bool select_atom=false;
     size_t model_idx=0;
     vector<string> tmp_str_vec;
+    string atom_opt(atom_opt_spaces);
+    atom_opt.erase(remove(atom_opt.begin(), atom_opt.end(), ' '), atom_opt.end());
     
     int compress_type=0; // uncompressed file
     ifstream fin;
@@ -188,13 +190,15 @@ size_t get_PDB_lines(const string filename,
                 (line.compare(0, 6, "HETATM")==0 && het_opt==2 && 
                  line.compare(17,3, "MSE")==0)))
             {
+                string atom = line.substr(12, 4);
+                atom.erase(remove(atom.begin(), atom.end(), ' '), atom.end());
                 if (atom_opt=="auto")
                 {
                     if (line[17]==' ' && (line[18]=='D'||line[18]==' '))
-                         select_atom=(line.compare(12,4," C3'")==0);
-                    else select_atom=(line.compare(12,4," CA ")==0);
+                         select_atom=(atom=="C3'");
+                    else select_atom=(atom=="CA");
                 }
-                else     select_atom=(line.compare(12,4,atom_opt)==0);
+                else     select_atom=(atom==atom_opt);
                 if (select_atom)
                 {
                     if (!chainID)
@@ -425,13 +429,15 @@ size_t get_PDB_lines(const string filename,
             else if (AA.size()==2) AA=" " +AA;
             else if (AA.size()>=4) continue;
 
+            string cmpatom(atom);
+            cmpatom.erase(remove(cmpatom.begin(), cmpatom.end(), ' '), cmpatom.end());
             if (atom_opt=="auto")
             {
                 if (AA[0]==' ' && (AA[1]=='D'||AA[1]==' ')) // DNA || RNA
-                     select_atom=(atom==" C3'");
-                else select_atom=(atom==" CA ");
+                     select_atom=(cmpatom=="C3'");
+                else select_atom=(cmpatom=="CA");
             }
-            else     select_atom=(atom==atom_opt);
+            else     select_atom=(cmpatom==atom_opt);
 
             if (!select_atom) continue;
 
